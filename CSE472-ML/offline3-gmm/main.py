@@ -16,11 +16,29 @@ def main():
     data = pd.read_csv(input_file, header=None, sep=" ")
     print(f"File read complete! Data shape: {data.shape}")
     
+    k_range = range(1, 12)
+    log_likelihood = []
+
+    for k in k_range:
+        print(f"Running for k = {k}")
+        model = GaussianMixtureModel(n_comp=k)
+        model.fit(data.values)
+        log_likelihood.append(model.log_likelihood)
+
     ###################################################
-    #   Task 3 - Compressing multi-dimensional data
+    #   Task 1 - Plotting k vs. max-log-likelihood
     ###################################################
+    plt.plot(k_range, log_likelihood, marker="o")
+    plt.xlabel(f"Max number of components: {len(k_range)}")
+    plt.ylabel("Log Likelihood")
+    plt.savefig(f"{input_file}_out.png")
+    plt.clf()
+
+    #####################################################################
+    #   Task 3 - Compressing multi-dimensional data (only for plotting)
+    #####################################################################
     if data.shape[1] > 2:
-        print("Dimension greater than 2. Using TSNE/PCA for compression...")
+        print("Dimension greater than 2. Using PCA/UMAP/TSNE for compression...")
         from sklearn.decomposition import PCA
         pca = PCA(n_components=2)
         data = pca.fit_transform(data.values)
@@ -36,30 +54,12 @@ def main():
         # data = tsne.fit_transform(data.values)
         # print(f"[TSNE] Compression complete! New data shape: {data.shape}")
 
-    data = pd.DataFrame(data)
-    
-    k_range = range(1, 12)
-    log_likelihood = []
-
-    for k in k_range:
-        print(f"Running for k = {k}")
-        model = GaussianMixtureModel(n_comp=k)
-        model.fit(data.values)
-        log_likelihood.append(model.log_likelihood)
-
-    ###################################################
-    #   Task 1 - Plotting k vs. max-log-likelihood
-    ###################################################
-    plt.plot(k_range, log_likelihood)
-    plt.xlabel(f"Number of components: {len(k_range)}")
-    plt.ylabel("Log Likelihood")
-    plt.savefig(f"{input_file}_out.png")
-    plt.clf()
-
     ###################################################
     #   Task 2 - Animating Contour over Iterations
     ###################################################
     k_star = 4
+    data = pd.DataFrame(data)
+
     model = GaussianMixtureModel(n_comp=k_star, anim=True)
     model.fit(data.values)
     model.plot_contour(data.values)

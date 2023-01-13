@@ -21,8 +21,12 @@ class GaussianMixtureModel:
         self.weights = None
         self.phi = None
 
+        self.log_likelihood = 0
+
 
     def fit(self, X) -> None:
+
+        X_copy = X.copy()
 
         self.n_samp, self.n_feat = X.shape
         self.means = np.random.rand(self.n_comp, self.n_feat)
@@ -37,9 +41,10 @@ class GaussianMixtureModel:
             # Perform EM algorithm
             self.e_step(X)
             self.m_step(X)
-            curr_likelihood = self.likelihood(X)
+            curr_likelihood = self.likelihood(X_copy)
 
             if np.abs(curr_likelihood - self.log_likelihood) < self.tol:
+                print(f"break at {_}")
                 break
             
             #   Task 2
@@ -62,17 +67,36 @@ class GaussianMixtureModel:
             )
             likelihood[:, k] = distr.pdf(X)
 
-        num = likelihood * self.phi + 1e-6
+        num = likelihood * self.phi
         denum = num.sum(axis=1, keepdims=True)
 
         return num / denum
 
 
+    def gaussian_mixture_log_likelihood(self, data, weights, means, covariances):
+        """Calculate the log likelihood of a Gaussian mixture model."""
+        n_samples, _ = data.shape
+        n_components = len(weights)
+        log_likelihood = 0
+        for i in range(n_samples):
+            sample_likelihood = 0
+            for j in range(n_components):
+                pdf = multivariate_normal.pdf(data[i], mean=means[j], cov=covariances[j], allow_singular=True)
+                sample_likelihood += weights[j] * pdf
+            log_likelihood += np.log(sample_likelihood)
+
+        return log_likelihood
+
+
     def likelihood(self, X):
         lh = 0
         for k in range(self.n_comp):
-            lh += self.phi[k] * multivariate_normal.pdf(X, self.means[k], self.covs[k], allow_singular=True)
+            pdf = multivariate_normal.pdf(X, self.means[k], self.covs[k], allow_singular=True)
+            lh += np.dot(self.phi[k], pdf)
         return np.sum(np.log(lh))
+
+    # def likelihood(self, X):
+    #     return self.gaussian_mixture_log_likelihood(X, self.phi, self.means, self.covs)
 
 
     #   Update weights and phi (mean weights) 
