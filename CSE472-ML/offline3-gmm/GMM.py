@@ -1,4 +1,3 @@
-from matplotlib.animation import FuncAnimation
 from matplotlib import pyplot as plt
 from scipy.stats import multivariate_normal
 
@@ -7,7 +6,7 @@ import numpy as np
 
 class GaussianMixtureModel:
 
-    def __init__(self, n_comp, max_iter=100, tol=1e-3) -> None:
+    def __init__(self, n_comp, max_iter=100, tol=1e-3, anim=False) -> None:
         
         self.n_comp = n_comp
         self.n_samp = 0
@@ -15,6 +14,7 @@ class GaussianMixtureModel:
 
         self.max_iter = max_iter
         self.tol = tol
+        self.anim = anim
 
         self.means = None
         self.covs = None
@@ -42,6 +42,11 @@ class GaussianMixtureModel:
             if np.abs(curr_likelihood - self.log_likelihood) < self.tol:
                 break
             
+            #   Task 2
+            #   Animating Contour over Iterations       
+            if self.anim:
+                self.plot_contour(X)
+    
         self.log_likelihood = curr_likelihood
 
 
@@ -57,14 +62,9 @@ class GaussianMixtureModel:
             )
             likelihood[:, k] = distr.pdf(X)
 
-            # print(f"likelihood[:, k] ->\n{likelihood[:, k]}")
-            # print(f"log of  likelihood[:, k] ->\n{np.log(likelihood[:, k])}")            
-            # print(f"basic likelihood ->\n{np.sum(np.log(likelihood[:, k]))}")
-
         num = likelihood * self.phi + 1e-6
         denum = num.sum(axis=1, keepdims=True)
-        # print(f"num/denum -> {num/denum}\n")
-        # print(f"shape of prob -> {(num/denum).shape}\n")
+
         return num / denum
 
 
@@ -109,24 +109,24 @@ class GaussianMixtureModel:
         return distr.pdf(X)
 
 
-    def __plot_contour(self, X):
-        plt.scatter(X[:, 0], X[:, 1], c=self.predict(X), cmap='viridis', s=40, edgecolors='k', alpha=0.5)
-        x, y = np.mgrid[
-            np.min(X[:, 0]) : np.max(X[:, 0]) : .01,
-            np.min(X[:, 1]) : np.max(X[:, 1]) : .01
-        ]        
-        positions = np.dstack((x, y))
+    #   Task 2
+    #   Animating Contour over Iterations
+    def plot_contour(self, X):
 
-        for k in range(self.n_comp):
-            score = self.score(positions, k)
-            plt.contour(x, y, score, colors='k', alpha=0.5)
-
-
-    def plot(self, X):
         plt.ion()
         plt.clf()
-        self.__plot_contour(X)
+        plt.scatter(X[:, 0], X[:, 1], c=self.predict(X), cmap='viridis', s=40, edgecolors='k', alpha=0.5)
+        x, y = np.mgrid[
+            np.min(X[:, 0]) : np.max(X[:, 0]) : .1,
+            np.min(X[:, 1]) : np.max(X[:, 1]) : .1
+        ]
+
+        positions = np.dstack((x, y))
+        for k in range(self.n_comp):
+            score = self.score(positions, k)
+            plt.contour(x, y, score, colors='k', alpha=0.5, linewidths=1)
+
         plt.draw()
-        plt.pause(10)
+        plt.pause(0.0001)
         plt.ioff()
 
