@@ -76,7 +76,9 @@ def main_train():
     cnn.add(FlatteningLayer())
     
     cnn.add(DenseLayer(n_output=84))
+    cnn.add(ReLUActivationLayer())
     cnn.add(DenseLayer(n_output=10))
+    cnn.add(ReLUActivationLayer())
 
     cnn.add(SoftMaxLayer())
     
